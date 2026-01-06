@@ -12,6 +12,7 @@ import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angula
 export class DailyAgendaComponent implements OnInit {
 
   appointments: Appointment[] = [];
+  editingId: string | null = null;
   loading = true;
   submitting = false;
   errorMessage = '';
@@ -57,7 +58,7 @@ export class DailyAgendaComponent implements OnInit {
   }
 
 
-  createAppointment(): void {
+  saveAppointment(): void {
     if (this.form.invalid) return;
 
     this.submitting = true;
@@ -66,30 +67,58 @@ export class DailyAgendaComponent implements OnInit {
     const { date, time, durationMinutes, customerName, customerPhone } =
       this.form.value;
 
-    // Combinar data + hora (local)
     const localDateTime = new Date(`${date}T${time}`);
-
     const payload = {
-      date: localDateTime.toISOString(), // envia UTC
+      date: localDateTime.toISOString(),
       durationMinutes,
       customerName,
       customerPhone
     };
 
-    this.appointmentsService.create(payload).subscribe({
+    const request$ = this.editingId
+      ? this.appointmentsService.update(this.editingId, payload)
+      : this.appointmentsService.create(payload);
+
+    request$.subscribe({
       next: () => {
         this.form.reset({ durationMinutes: 30 });
-        this.loadToday(); // recarrega agenda
+        this.editingId = null;
+        this.loadToday();
         this.submitting = false;
       },
       error: err => {
-        if (err.status === 409) {
-          this.errorMessage = 'Horário já ocupado.';
-        } else {
-          this.errorMessage = 'Erro ao criar agendamento.';
-        }
+        this.errorMessage =
+          err.status === 409
+            ? 'Horário já ocupado.'
+            : 'Erro ao salvar agendamento.';
         this.submitting = false;
       }
+    });
+  }
+
+
+  editAppointment(a: Appointment): void {
+    this.editingId = a.id;
+
+    const localDate = new Date(a.date);
+
+    this.form.patchValue({
+      date: localDate.toLocaleDateString('en-CA'),
+      time: localDate.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      durationMinutes: a.durationMinutes,
+      customerName: a.customerName,
+      customerPhone: a.customerPhone
+    });
+  }
+
+  deleteAppointment(id: string): void {
+    if (!confirm('Deseja cancelar este agendamento?')) return;
+
+    this.appointmentsService.delete(id).subscribe(() => {
+      this.loadToday();
     });
   }
 
@@ -101,6 +130,4 @@ export class DailyAgendaComponent implements OnInit {
       minute: '2-digit'
     });
   }
-
-
 }

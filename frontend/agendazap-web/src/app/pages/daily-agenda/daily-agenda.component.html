@@ -1,37 +1,67 @@
-<h2>Novo Agendamento</h2>
+<div class="container">
 
-<form [formGroup]="form" (ngSubmit)="createAppointment()">
+    <!-- FORM -->
+    <section class="card">
+        <h2>Novo Agendamento</h2>
 
-    <input type="date" formControlName="date" />
-    <input type="time" formControlName="time" />
+        <form [formGroup]="form" (ngSubmit)="saveAppointment()">
 
-    <input type="number" placeholder="Duração (min)" formControlName="durationMinutes" />
+            <div class="row">
+                <input type="date" formControlName="date" />
+                <input type="time" formControlName="time" />
+            </div>
 
-    <input type="text" placeholder="Nome do cliente" formControlName="customerName" />
+            <div class="row">
+                <input type="number" placeholder="Duração (min)" formControlName="durationMinutes" />
+            </div>
 
-    <input type="text" placeholder="Telefone" formControlName="customerPhone" />
+            <div class="row">
+                <input type="text" placeholder="Nome do cliente" formControlName="customerName" />
+            </div>
 
-    <button type="submit" [disabled]="form.invalid || submitting">
-        {{ submitting ? 'Salvando...' : 'Agendar' }}
-    </button>
+            <div class="row">
+                <input type="text" placeholder="Telefone" formControlName="customerPhone" />
+            </div>
 
-    <div *ngIf="errorMessage" style="color: red">
-        {{ errorMessage }}
-    </div>
+            <button type="submit">
+                {{ editingId ? 'Salvar alterações' : 'Agendar' }}
+            </button>
 
-</form>
 
-<h2>Agenda de Hoje</h2>
+            <div class="error" *ngIf="errorMessage">
+                {{ errorMessage }}
+            </div>
 
-<div *ngIf="loading">Carregando...</div>
+        </form>
+    </section>
 
-<ul *ngIf="!loading && appointments.length > 0">
-    <li *ngFor="let a of appointments">
-        <strong>{{ formatTime(a.date) }}</strong>
-        - {{ a.customerName }} ({{ a.durationMinutes }} min)
-    </li>
-</ul>
+    <!-- AGENDA -->
+    <section class="card">
+        <h2>Agenda do Dia</h2>
 
-<div *ngIf="!loading && appointments.length === 0">
-    Nenhum agendamento para hoje.
+        <div *ngIf="loading">Carregando...</div>
+
+        <div *ngIf="!loading && appointments.length === 0" class="empty">
+            Nenhum agendamento para hoje.
+        </div>
+
+        <ul class="agenda" *ngIf="appointments.length > 0">
+            <li *ngFor="let a of appointments" class="agenda-item">
+                <div class="time">{{ formatTime(a.date) }}</div>
+
+                <div class="info">
+                    <strong>{{ a.customerName }}</strong>
+                    <span>{{ a.durationMinutes }} min</span>
+                </div>
+
+                <div class="actions">
+                    <button (click)="editAppointment(a)">✏️</button>
+                    <button (click)="deleteAppointment(a.id)">🗑️</button>
+                </div>
+            </li>
+
+        </ul>
+
+    </section>
+
 </div>

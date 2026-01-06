@@ -7,6 +7,7 @@ export interface Appointment {
     date: string;
     durationMinutes: number;
     customerName: string;
+    customerPhone: string;
 }
 
 @Injectable({
@@ -26,6 +27,14 @@ export class AppointmentsService {
 
     create(data: any) {
         return this.http.post(`${this.apiUrl}/appointments`, data);
+    }
+
+    update(id: string, data: any) {
+        return this.http.put(`${this.apiUrl}/appointments/${id}`, data);
+    }
+
+    delete(id: string) {
+        return this.http.delete(`${this.apiUrl}/appointments/${id}`);
     }
 
 }

@@ -113,11 +113,59 @@ app.MapGet("/appointments", async (
             Id = a.Id,
             Date = a.Date,
             DurationMinutes = a.DurationMinutes,
-            CustomerName = a.CustomerName
+            CustomerName = a.CustomerName,
+            CustomerPhone = a.CustomerPhone
         })
         .ToListAsync();
 
     return Results.Ok(appointments);
+});
+
+app.MapPut("/appointments/{id:guid}", async (
+    Guid id,
+    UpdateAppointmentRequest request,
+    AppDbContext db
+) =>
+{
+    var appointment = await db.Appointments.FindAsync(id);
+    if (appointment is null)
+        return Results.NotFound();
+
+    var start = DateTime.SpecifyKind(request.Date, DateTimeKind.Utc);
+    var end = start.AddMinutes(request.DurationMinutes);
+
+    var hasConflict = await db.Appointments.AnyAsync(a =>
+        a.Id != id &&
+        a.Date < end &&
+        a.Date.AddMinutes(a.DurationMinutes) > start
+    );
+
+    if (hasConflict)
+        return Results.Conflict("Time slot already booked.");
+
+    appointment.Date = start;
+    appointment.DurationMinutes = request.DurationMinutes;
+    appointment.CustomerName = request.CustomerName;
+    appointment.CustomerPhone = request.CustomerPhone;
+
+    await db.SaveChangesAsync();
+
+    return Results.NoContent();
+});
+
+app.MapDelete("/appointments/{id:guid}", async (
+    Guid id,
+    AppDbContext db
+) =>
+{
+    var appointment = await db.Appointments.FindAsync(id);
+    if (appointment is null)
+        return Results.NotFound();
+
+    db.Appointments.Remove(appointment);
+    await db.SaveChangesAsync();
+
+    return Results.NoContent();
 });
 
 
