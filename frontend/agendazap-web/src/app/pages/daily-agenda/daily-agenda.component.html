@@ -1,3 +1,26 @@
+<h2>Novo Agendamento</h2>
+
+<form [formGroup]="form" (ngSubmit)="createAppointment()">
+
+    <input type="date" formControlName="date" />
+    <input type="time" formControlName="time" />
+
+    <input type="number" placeholder="Duração (min)" formControlName="durationMinutes" />
+
+    <input type="text" placeholder="Nome do cliente" formControlName="customerName" />
+
+    <input type="text" placeholder="Telefone" formControlName="customerPhone" />
+
+    <button type="submit" [disabled]="form.invalid || submitting">
+        {{ submitting ? 'Salvando...' : 'Agendar' }}
+    </button>
+
+    <div *ngIf="errorMessage" style="color: red">
+        {{ errorMessage }}
+    </div>
+
+</form>
+
 <h2>Agenda de Hoje</h2>
 
 <div *ngIf="loading">Carregando...</div>

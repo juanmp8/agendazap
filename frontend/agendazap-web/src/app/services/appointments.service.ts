@@ -23,4 +23,9 @@ export class AppointmentsService {
             `${this.apiUrl}/appointments?date=${date}`
         );
     }
+
+    create(data: any) {
+        return this.http.post(`${this.apiUrl}/appointments`, data);
+    }
+
 }
