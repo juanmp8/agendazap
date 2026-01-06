@@ -35,7 +35,7 @@ app.MapGet("/weatherforecast", () =>
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
-app.Run();
+app.Run("http://0.0.0.0:8080");
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
