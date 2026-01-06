@@ -1,4 +1,6 @@
 using AgendaZap.Api.Data;
+using AgendaZap.Api.Dtos;
+using AgendaZap.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,7 +16,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     );
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AngularDev", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("AngularDev");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -44,6 +59,67 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast");
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
+app.MapPost("/appointments", async (
+    CreateAppointmentRequest request,
+    AppDbContext db
+) =>
+{
+    // Validação básica
+    if (request.DurationMinutes <= 0)
+        return Results.BadRequest("Duration must be greater than zero.");
+
+    var start = DateTime.SpecifyKind(request.Date, DateTimeKind.Utc);
+    var end = start.AddMinutes(request.DurationMinutes);
+
+    // Verificar conflito
+    var hasConflict = await db.Appointments.AnyAsync(a =>
+        a.Date < end &&
+        a.Date.AddMinutes(a.DurationMinutes) > start
+    );
+
+    if (hasConflict)
+        return Results.Conflict("Time slot already booked.");
+
+    var appointment = new Appointment
+    {
+        Id = Guid.NewGuid(),
+        Date = start,
+        DurationMinutes = request.DurationMinutes,
+        CustomerName = request.CustomerName,
+    CustomerPhone = request.CustomerPhone
+};
+
+
+    db.Appointments.Add(appointment);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/appointments/{appointment.Id}", appointment);
+});
+
+app.MapGet("/appointments", async (
+    DateTime date,
+    AppDbContext db
+) =>
+{
+    var dayStart = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
+    var dayEnd = dayStart.AddDays(1);
+
+    var appointments = await db.Appointments
+        .Where(a => a.Date >= dayStart && a.Date < dayEnd)
+        .OrderBy(a => a.Date)
+        .Select(a => new AppointmentResponse
+        {
+            Id = a.Id,
+            Date = a.Date,
+            DurationMinutes = a.DurationMinutes,
+            CustomerName = a.CustomerName
+        })
+        .ToListAsync();
+
+    return Results.Ok(appointments);
+});
+
 
 app.Run("http://0.0.0.0:8080");
 
