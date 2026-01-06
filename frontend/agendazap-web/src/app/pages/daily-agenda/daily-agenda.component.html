@@ -1,0 +1,14 @@
+<h2>Agenda de Hoje</h2>
+
+<div *ngIf="loading">Carregando...</div>
+
+<ul *ngIf="!loading && appointments.length > 0">
+    <li *ngFor="let a of appointments">
+        <strong>{{ formatTime(a.date) }}</strong>
+        - {{ a.customerName }} ({{ a.durationMinutes }} min)
+    </li>
+</ul>
+
+<div *ngIf="!loading && appointments.length === 0">
+    Nenhum agendamento para hoje.
+</div>
