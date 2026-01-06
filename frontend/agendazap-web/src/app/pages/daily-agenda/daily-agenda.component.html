@@ -56,12 +56,38 @@
 
                 <div class="actions">
                     <button (click)="editAppointment(a)">✏️</button>
-                    <button (click)="deleteAppointment(a.id)">🗑️</button>
+                    <button (click)="openDeleteModal(a)">🗑️</button>
                 </div>
             </li>
 
         </ul>
 
     </section>
+
+</div>
+
+<!-- MODAL BACKDROP -->
+<div class="modal-backdrop" *ngIf="appointmentToDelete">
+
+    <div class="modal">
+        <h3>Cancelar agendamento</h3>
+
+        <p>
+            Deseja cancelar o agendamento de
+            <strong>{{ appointmentToDelete.customerName }}</strong>
+            às
+            <strong>{{ formatTime(appointmentToDelete.date) }}</strong>?
+        </p>
+
+        <div class="modal-actions">
+            <button class="danger" (click)="confirmDelete()">
+                Cancelar agendamento
+            </button>
+
+            <button class="secondary" (click)="closeDeleteModal()">
+                Voltar
+            </button>
+        </div>
+    </div>
 
 </div>

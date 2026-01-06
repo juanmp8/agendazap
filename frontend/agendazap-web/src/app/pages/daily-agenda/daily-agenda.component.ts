@@ -17,6 +17,7 @@ export class DailyAgendaComponent implements OnInit {
   submitting = false;
   errorMessage = '';
   form!: FormGroup;
+  appointmentToDelete: Appointment | null = null;
 
   constructor(private appointmentsService: AppointmentsService, private fb: FormBuilder) { }
 
@@ -122,7 +123,6 @@ export class DailyAgendaComponent implements OnInit {
     });
   }
 
-
   formatTime(utcDate: string): string {
     const date = new Date(utcDate);
     return date.toLocaleTimeString('pt-BR', {
@@ -130,4 +130,25 @@ export class DailyAgendaComponent implements OnInit {
       minute: '2-digit'
     });
   }
+
+  openDeleteModal(a: Appointment): void {
+    this.appointmentToDelete = a;
+  }
+
+  closeDeleteModal(): void {
+    this.appointmentToDelete = null;
+  }
+
+  confirmDelete(): void {
+    if (!this.appointmentToDelete) return;
+
+    this.appointmentsService
+      .delete(this.appointmentToDelete.id)
+      .subscribe(() => {
+        this.closeDeleteModal();
+        this.loadToday();
+      });
+  }
+
+
 }
